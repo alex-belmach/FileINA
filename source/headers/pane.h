@@ -2,22 +2,19 @@
 #define PANE_H
 
 #include <QFrame>
-#include <QMainWindow>
 #include <QLineEdit>
 #include <QTreeView>
 #include <QListView>
 #include <QStackedWidget>
 #include <QVBoxLayout>
+#include <QProcess>
+
+class MainWindow;
 
 class Pane: public QFrame
 {
     Q_OBJECT
 public:
-    QLineEdit *pathLineEdit;
-    QTreeView *treeView;
-    QListView *listView;
-    QStackedWidget *stackedWidget;
-
     enum ViewMode
     {
         Table, List
@@ -25,12 +22,23 @@ public:
 
     explicit Pane(QWidget* parent = 0);
     void setActive(bool );
-    void setViewMode(const ViewMode view);
+    void setViewMode(const ViewMode );
+    void changeTo(const QString& );
+    bool isFocused(QWidget* );
+    int currentView();
 
 private:
     bool active;
-    QMainWindow *mainWindow;
+    MainWindow *mainWindow;
     QVBoxLayout *vBoxLayout;
+    QLineEdit *pathLineEdit;
+    QTreeView *treeView;
+    QListView *listView;
+    QStackedWidget *stackedWidget;
+
+private slots:
+    void slotDoubleClicked(QModelIndex );
+    void slotPathChanged();
 };
 
 #endif // PANE_H

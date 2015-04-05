@@ -14,32 +14,29 @@
 #include <QAction>
 #include <QMessageBox>
 
-namespace Ui {
-class MainWindow;
-}
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-public:
+public:                                 //get rid of public variables
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     Pane *leftPane;
     Pane *rightPane;
     Pane *activePane;
     QToolBar *toolBar;
+    QFileSystemModel *fileSystemModel;
+    QSortFilterProxyModel *fileSystemProxyModel;
+    QTreeView *dirTreeView;
 
 private:
-    QTreeView *dirTreeView;
     QSplitter *splitter;
     QMenuBar *menuBar;
     QMenu *fileMenu;
     QMenu *editMenu;
     QMenu *viewMenu;
     QMenu *helpMenu;
-    QFileSystemModel *fileSystemModel;
-    QSortFilterProxyModel *fileSystemProxyModel;
+    QItemSelectionModel* dirSelectionModel;
     QAction *aboutAction;
     QAction *openAction;
     QAction *newFolderAction;
@@ -55,10 +52,12 @@ private:
 
     void createMenusAndActions();
     void setActivePane(Pane *);
+    Pane* getActivePane();
     void updateViewActions();
 
 private slots:
     void slotFocusChanged(QWidget*, QWidget*);
+    void slotDirSelectionChanged(QModelIndex, QModelIndex);
     void slotShowAbout();
     void slotOpen();
     void slotNewFolder();

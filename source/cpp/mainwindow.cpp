@@ -26,6 +26,9 @@ MainWindow::MainWindow(QWidget *parent) :
     dirTreeView->hideColumn(2);
     dirTreeView->hideColumn(3);
 
+    dirSelectionModel = dirTreeView->selectionModel();
+    connect(dirSelectionModel, SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(slotDirSelectionChanged(QModelIndex, QModelIndex)));
+
     leftPane = new Pane(splitter);
     rightPane = new Pane(splitter);
     setActivePane(leftPane);
@@ -41,10 +44,23 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::slotFocusChanged(QWidget*, QWidget* focus)
 {
-    if ((focus == rightPane->pathLineEdit) || (focus == rightPane->treeView) || (focus == rightPane->listView))
+    if (rightPane->isFocused(focus))
         setActivePane(rightPane);
-    else if ((focus == leftPane->pathLineEdit) || (focus == leftPane->treeView) || (focus == leftPane->listView))
+    else if (leftPane->isFocused(focus))
         setActivePane(leftPane);
+}
+
+void MainWindow::slotDirSelectionChanged(QModelIndex current, QModelIndex )
+{
+    QFileInfo fileInfo(fileSystemModel->fileInfo(fileSystemProxyModel->mapToSource(current)));
+    if (!fileInfo.exists())
+        return;
+    activePane->changeTo(fileInfo.filePath());
+}
+
+Pane* MainWindow::getActivePane()
+{
+    return (activePane);
 }
 
 void MainWindow::setActivePane(Pane * pane)
@@ -60,7 +76,7 @@ void MainWindow::setActivePane(Pane * pane)
 
 void MainWindow::updateViewActions()
 {
-    if (activePane->stackedWidget->currentIndex() == Pane::Table)
+    if (activePane->currentView() == Pane::Table)
         tableViewAction->setChecked(true);
     else
         listViewAction->setChecked(true);
