@@ -13,6 +13,7 @@
 #include <QModelIndex>
 #include <QAction>
 #include <QMessageBox>
+#include <QClipboard>
 
 class MainWindow : public QMainWindow
 {
@@ -59,7 +60,6 @@ private slots:
     void slotFocusChanged(QWidget*, QWidget*);
     void slotDirSelectionChanged(QModelIndex, QModelIndex);
     void slotShowAbout();
-    void slotOpen();
     void slotNewFolder();
     void slotDelete();
     void slotSettings();

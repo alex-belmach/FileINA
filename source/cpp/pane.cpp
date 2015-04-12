@@ -88,15 +88,26 @@ void Pane::setViewMode(const ViewMode view)
     stackedWidget->setCurrentIndex(view);
 }
 
-bool Pane::isFocused(QWidget* focus)
+bool Pane::isFocused(QWidget* focus, bool withPath)
 {
-    if (focus == pathLineEdit || focus == treeView || focus == listView)
-        return true;
+    if (withPath)
+        if (focus == pathLineEdit || focus == treeView || focus == listView)
+            return true;
+        else
+            return false;
     else
-        return false;
+        if (focus == treeView || focus == listView)
+            return true;
+        else
+            return false;
 }
 
-int Pane::currentView()
+QAbstractItemView* Pane::getCurrentWidget()
+{
+    return (QAbstractItemView *)stackedWidget->currentWidget();
+}
+
+int Pane::getCurrentView()
 {
     return stackedWidget->currentIndex();
 }

@@ -44,9 +44,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::slotFocusChanged(QWidget*, QWidget* focus)
 {
-    if (rightPane->isFocused(focus))
+    if (rightPane->isFocused(focus, true))
         setActivePane(rightPane);
-    else if (leftPane->isFocused(focus))
+    else if (leftPane->isFocused(focus, true))
         setActivePane(leftPane);
 }
 
@@ -76,7 +76,7 @@ void MainWindow::setActivePane(Pane * pane)
 
 void MainWindow::updateViewActions()
 {
-    if (activePane->currentView() == Pane::Table)
+    if (activePane->getCurrentView() == Pane::Table)
         tableViewAction->setChecked(true);
     else
         listViewAction->setChecked(true);
@@ -88,10 +88,6 @@ void MainWindow::createMenusAndActions() //add actions icons
 
     aboutAction = new QAction("About", this);
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(slotShowAbout()));
-
-    openAction = new QAction("Open", this);
-    openAction->setShortcut(QKeySequence::Open);
-    connect(openAction, SIGNAL(triggered()), this, SLOT(slotOpen()));
 
     newFolderAction = new QAction("New Folder", this);
     newFolderAction->setShortcut(QKeySequence::New);
@@ -133,7 +129,6 @@ void MainWindow::createMenusAndActions() //add actions icons
     viewActionGroup->addAction(listViewAction);
 
     fileMenu = menuBar->addMenu("File");
-    fileMenu->addAction(openAction);
     fileMenu->addAction(deleteAction);
     fileMenu->addAction(newFolderAction);
     fileMenu->addSeparator();
@@ -162,19 +157,20 @@ void MainWindow::createMenusAndActions() //add actions icons
 void MainWindow::slotShowAbout()
 {
     QMessageBox::about(this, "About FileINA", "<h2>FileINA</h2>"
-                       "<p><em>Version 0.1</em>"
+                       "<p><em>Version 0.2</em>"
                        "<p>File Manager<br>"
                        "2015 by Alexey Belmach<br>");
 }
 
-void MainWindow::slotOpen()
-{
-
-}
-
 void MainWindow::slotNewFolder()
 {
-
+    QAbstractItemView *currentView = getActivePane()->getCurrentWidget();
+    QModelIndex newFolder = fileSystemModel->mkdir(currentView->rootIndex(), QString("New Folder"));
+    if (newFolder.isValid())
+    {
+        currentView->selectionModel()->setCurrentIndex(newFolder, QItemSelectionModel::ClearAndSelect);
+        currentView->edit(newFolder);
+    }
 }
 
 void MainWindow::slotSettings()
@@ -186,22 +182,90 @@ void MainWindow::slotSettings()
 
 void MainWindow::slotDelete()
 {
+    QModelIndexList selectionList;
+    bool yesToAll = false;
+    bool ok = false;
+    bool confirm = true;
 
+    QWidget* focus(focusWidget());
+    QAbstractItemView* view;
+    if (focus == dirTreeView || leftPane->isFocused(focus, false) || rightPane->isFocused(focus, false))
+    {
+        view = (QAbstractItemView *)focus;
+        selectionList = view->selectionModel()->selectedIndexes();
+    }
+
+    for (int i = 0; i < selectionList.count(); i++)
+    {
+        QFileInfo file(fileSystemModel->filePath(selectionList.at(i)));
+        if (file.isWritable())
+        {
+            if (file.isSymLink())
+                ok = QFile::remove(file.filePath());
+            else
+            {
+                if (!yesToAll)
+                    if (confirm)
+                    {
+                        int answer = QMessageBox::information(this, "Delete file", "Are you sure you want to delete<p><b>\"" + file.filePath() + "\"</b>?", QMessageBox::Yes | QMessageBox::No | QMessageBox::YesToAll);
+                        if (answer == QMessageBox::YesToAll)
+                            yesToAll = true;
+                        if (answer == QMessageBox::No)
+                            return;
+                    }
+                ok = fileSystemModel->remove(selectionList.at(i));
+            }
+        }
+        else if (file.isSymLink())
+            ok = QFile::remove(file.filePath());
+    }
+    if (!ok)
+        QMessageBox::information(this, "Delete failed", "Some files could not be deleted.");
+    return;
 }
 
 void MainWindow::slotCopy()
 {
-
+    QModelIndexList selectionList;
+    QWidget* focus(focusWidget());
+    QAbstractItemView* view;
+    if (focus == dirTreeView || getActivePane()->isFocused(focus, false))
+    {
+        view = (QAbstractItemView *)focus;
+        selectionList = view->selectionModel()->selectedIndexes();
+    }
+    if (selectionList.count() == 0)
+        return;
+    QApplication::clipboard()->setMimeData(fileSystemModel->mimeData(selectionList));
+    pasteAction->setData(false);
 }
 
 void MainWindow::slotCut()
 {
-
+    QModelIndexList selectionList;
+    QWidget* focus(focusWidget());
+    QAbstractItemView* view;
+    if (focus == dirTreeView || getActivePane()->isFocused(focus, false))
+    {
+        view = (QAbstractItemView *)focus;
+        selectionList = view->selectionModel()->selectedIndexes();
+    }
+    if (selectionList.count() == 0)
+        return;
+    QApplication::clipboard()->setMimeData(fileSystemModel->mimeData(selectionList));
+    pasteAction->setData(true);
+    view->selectionModel()->clear();
 }
 
 void MainWindow::slotPaste()
 {
-
+    QWidget* focus(focusWidget());
+    Qt::DropAction copyOrCut(pasteAction->data().toBool() ? Qt::MoveAction : Qt::CopyAction);
+    if (getActivePane()->isFocused(focus, false))
+        fileSystemModel->dropMimeData(QApplication::clipboard()->mimeData(), copyOrCut, 0, 0, qobject_cast<QAbstractItemView *>(focus)->rootIndex());
+    else
+        if (focus == dirTreeView)
+            fileSystemModel->dropMimeData(QApplication::clipboard()->mimeData(), copyOrCut, 0, 0, fileSystemProxyModel->mapToSource(dirTreeView->currentIndex()));
 }
 
 void MainWindow::slotTableView()

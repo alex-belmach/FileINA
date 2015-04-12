@@ -24,8 +24,9 @@ public:
     void setActive(bool );
     void setViewMode(const ViewMode );
     void changeTo(const QString& );
-    bool isFocused(QWidget* );
-    int currentView();
+    bool isFocused(QWidget* , bool);
+    int getCurrentView();
+    QAbstractItemView* getCurrentWidget();
 
 private:
     bool active;
