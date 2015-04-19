@@ -40,6 +40,7 @@ private:
 private slots:
     void slotDoubleClicked(QModelIndex );
     void slotPathChanged();
+    void slotContextMenu(const QPoint& );
 };
 
 #endif // PANE_H

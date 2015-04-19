@@ -25,6 +25,8 @@ MainWindow::MainWindow(QWidget *parent) :
     dirTreeView->hideColumn(1);
     dirTreeView->hideColumn(2);
     dirTreeView->hideColumn(3);
+   // dirTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
+   // connect(dirTreeView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slotContextMenu(const QPoint &)));
 
     dirSelectionModel = dirTreeView->selectionModel();
     connect(dirSelectionModel, SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(slotDirSelectionChanged(QModelIndex, QModelIndex)));
@@ -42,12 +44,27 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(qApp, SIGNAL(focusChanged(QWidget*, QWidget*)), SLOT(slotFocusChanged(QWidget*, QWidget*)));
 }
 
+void MainWindow::slotContextMenu(const QPoint& pos)
+{
+    showContextMenu(dirTreeView->mapToGlobal(pos));
+}
+
 void MainWindow::slotFocusChanged(QWidget*, QWidget* focus)
 {
     if (rightPane->isFocused(focus, true))
         setActivePane(rightPane);
     else if (leftPane->isFocused(focus, true))
         setActivePane(leftPane);
+}
+
+void MainWindow::toolBarSetVisible(bool visibility)
+{
+    toolBar->setVisible(visibility);
+}
+
+bool MainWindow::toolBarVisibility()
+{
+    return toolBar->isVisible();
 }
 
 void MainWindow::slotDirSelectionChanged(QModelIndex current, QModelIndex )
@@ -72,6 +89,19 @@ void MainWindow::setActivePane(Pane * pane)
         rightPane->setActive(false);
     activePane = pane;
     updateViewActions();
+}
+
+void MainWindow::setCurrentIndex(const QModelIndex &index)
+{
+    dirTreeView->setCurrentIndex(fileSystemProxyModel->mapFromSource(index));
+}
+
+bool MainWindow::viewIsFocused(QWidget *focus, bool withPath)
+{
+    if ((focus == dirTreeView) | (leftPane->isFocused(focus, withPath)) | (rightPane->isFocused(focus, withPath)))
+        return true;
+    else
+        return false;
 }
 
 void MainWindow::updateViewActions()
@@ -116,6 +146,10 @@ void MainWindow::createMenusAndActions() //add actions icons
     cutAction->setShortcut(QKeySequence::Cut);
     connect(cutAction, SIGNAL(triggered()), this, SLOT(slotCut()));
 
+    propertiesAction = new QAction("Properties", this);
+    propertiesAction->setShortcut(QKeySequence::Preferences);
+    connect(propertiesAction, SIGNAL(triggered()), this, SLOT(slotShowProperties()));
+
     tableViewAction = new QAction("Table View", this);
     tableViewAction->setCheckable(true);
     connect(tableViewAction, SIGNAL(triggered()), this, SLOT(slotTableView()));
@@ -127,6 +161,10 @@ void MainWindow::createMenusAndActions() //add actions icons
     viewActionGroup = new QActionGroup(this);
     viewActionGroup->addAction(tableViewAction);
     viewActionGroup->addAction(listViewAction);
+
+    showHiddenAction = new QAction("Show Hidden", this);
+    showHiddenAction->setCheckable(true);
+    connect(showHiddenAction, SIGNAL(triggered()), this, SLOT(slotShowHidden()));
 
     fileMenu = menuBar->addMenu("File");
     fileMenu->addAction(deleteAction);
@@ -152,6 +190,17 @@ void MainWindow::createMenusAndActions() //add actions icons
 
     toolBar = addToolBar("Tools");
 
+    contextMenu = new QMenu(this);
+    contextMenu->addAction(tableViewAction);
+    contextMenu->addAction(listViewAction);
+    contextMenu->addSeparator();
+    contextMenu->addAction(copyAction);
+    contextMenu->addAction(cutAction);
+    contextMenu->addAction(pasteAction);
+    contextMenu->addSeparator();
+    contextMenu->addAction(deleteAction);
+    contextMenu->addSeparator();
+    contextMenu->addAction(propertiesAction);
 }
 
 void MainWindow::slotShowAbout()
@@ -189,7 +238,7 @@ void MainWindow::slotDelete()
 
     QWidget* focus(focusWidget());
     QAbstractItemView* view;
-    if (focus == dirTreeView || leftPane->isFocused(focus, false) || rightPane->isFocused(focus, false))
+    if (viewIsFocused(focus, false))
     {
         view = (QAbstractItemView *)focus;
         selectionList = view->selectionModel()->selectedIndexes();
@@ -268,6 +317,11 @@ void MainWindow::slotPaste()
             fileSystemModel->dropMimeData(QApplication::clipboard()->mimeData(), copyOrCut, 0, 0, fileSystemProxyModel->mapToSource(dirTreeView->currentIndex()));
 }
 
+void MainWindow::showContextMenu(QPoint pos)
+{
+    contextMenu->exec(pos);
+}
+
 void MainWindow::slotTableView()
 {
     activePane->setViewMode(Pane::Table);
@@ -276,6 +330,25 @@ void MainWindow::slotTableView()
 void MainWindow::slotListView()
 {
     activePane->setViewMode(Pane::List);
+}
+
+void MainWindow::slotShowProperties()
+{
+    Properties prop(this);
+    prop.exec();
+}
+
+void MainWindow::slotShowHidden()
+{
+    if (showHiddenAction->isChecked())
+        fileSystemModel->setFilter(QDir::NoDot | QDir::AllEntries | QDir::System | QDir::Hidden);
+    else
+        fileSystemModel->setFilter(QDir::NoDot | QDir::AllEntries | QDir::System);
+}
+
+QFileSystemModel* MainWindow::getFileSystemModel()
+{
+    return fileSystemModel;
 }
 
 bool FileSystemFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const

@@ -3,6 +3,7 @@
 
 #include "pane.h"
 #include "settings.h"
+#include "properties.h"
 #include <QMainWindow>
 #include <QSplitter>
 #include <QTreeView>
@@ -22,21 +23,29 @@ class MainWindow : public QMainWindow
 public:                                 //get rid of public variables
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+    void showContextMenu(QPoint);
+    void setCurrentIndex(const QModelIndex &);
+    bool viewIsFocused(QWidget* , bool);
+    void toolBarSetVisible(bool);
+    bool toolBarVisibility();
+    QFileSystemModel* getFileSystemModel();
+
+private:
+    QTreeView *dirTreeView;
+    QFileSystemModel *fileSystemModel;
+    QSortFilterProxyModel *fileSystemProxyModel;
     Pane *leftPane;
     Pane *rightPane;
     Pane *activePane;
     QToolBar *toolBar;
-    QFileSystemModel *fileSystemModel;
-    QSortFilterProxyModel *fileSystemProxyModel;
-    QTreeView *dirTreeView;
-
-private:
     QSplitter *splitter;
     QMenuBar *menuBar;
     QMenu *fileMenu;
     QMenu *editMenu;
     QMenu *viewMenu;
     QMenu *helpMenu;
+    QMenu *contextMenu;
     QItemSelectionModel* dirSelectionModel;
     QAction *aboutAction;
     QAction *openAction;
@@ -49,6 +58,8 @@ private:
     QAction *cutAction;
     QAction *tableViewAction;
     QAction *listViewAction;
+    QAction *propertiesAction;
+    QAction *showHiddenAction;
     QActionGroup *viewActionGroup;
 
     void createMenusAndActions();
@@ -68,6 +79,9 @@ private slots:
     void slotCut();
     void slotTableView();
     void slotListView();
+    void slotShowProperties();
+    void slotContextMenu(const QPoint &);
+    void slotShowHidden();
 };
 
 class FileSystemFilterProxyModel : public QSortFilterProxyModel

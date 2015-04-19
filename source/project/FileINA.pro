@@ -15,9 +15,11 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     pane.cpp \
     settings.cpp \
+    properties.cpp
 
 HEADERS  += mainwindow.h \
     pane.h \
     settings.h \
+    properties.h
 
 FORMS    +=

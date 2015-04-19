@@ -10,19 +10,23 @@ Pane::Pane(QWidget *parent):
     connect(pathLineEdit, SIGNAL(editingFinished()), this, SLOT(slotPathChanged()));
 
     treeView = new QTreeView(this);
-    treeView->setModel(mainWindow->fileSystemModel);
+    treeView->setModel(mainWindow->getFileSystemModel());
     treeView->setFrameStyle(QFrame::NoFrame | QFrame::Plain);
     treeView->setRootIsDecorated(false);
     treeView->setSelectionMode(QAbstractItemView::ExtendedSelection); //find simple selection
-    treeView->setSortingEnabled(true); //think about unsynch sorting
+    //treeView->setSortingEnabled(true); //think about unsynch sorting
     treeView->setEditTriggers(QAbstractItemView::SelectedClicked);
     connect(treeView, SIGNAL(activated(QModelIndex)), this, SLOT(slotDoubleClicked(QModelIndex)));
+    treeView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(treeView, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(slotContextMenu(const QPoint&)));
 
     listView = new QListView(this);
-    listView->setModel(mainWindow->fileSystemModel);
+    listView->setModel(mainWindow->getFileSystemModel());
     listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     listView->setEditTriggers(QAbstractItemView::SelectedClicked);
     connect(listView, SIGNAL(activated(QModelIndex)), this, SLOT(slotDoubleClicked(QModelIndex)));
+    listView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(listView, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(slotContextMenu(const QPoint&)));
 
     stackedWidget = new QStackedWidget();
     stackedWidget->addWidget(treeView);
@@ -39,7 +43,7 @@ Pane::Pane(QWidget *parent):
 
 void Pane::slotDoubleClicked(QModelIndex index)
 {
-    QFileInfo fileInfo(mainWindow->fileSystemModel->filePath(index));
+    QFileInfo fileInfo(mainWindow->getFileSystemModel()->filePath(index));
     if (fileInfo.isDir())
         changeTo(fileInfo.absoluteFilePath());
     else
@@ -55,14 +59,19 @@ void Pane::slotDoubleClicked(QModelIndex index)
         }
 }
 
+void Pane::slotContextMenu(const QPoint& pos)
+{
+    mainWindow->showContextMenu(listView->mapToGlobal(pos));
+}
+
 void Pane::changeTo(const QString &path)
 {
     pathLineEdit->setText(path);
-    QModelIndex index(mainWindow->fileSystemModel->index(path));
+    QModelIndex index(mainWindow->getFileSystemModel()->index(path));
     treeView->setRootIndex(index);
     listView->setRootIndex(index);
     if (active)
-        mainWindow->dirTreeView->setCurrentIndex(mainWindow->fileSystemProxyModel->mapFromSource(index));
+        mainWindow->setCurrentIndex(index);
 }
 
 void Pane::slotPathChanged()
@@ -71,7 +80,7 @@ void Pane::slotPathChanged()
     if (fileInfo.isDir())
         changeTo(pathLineEdit->text());
     else
-        pathLineEdit->setText(mainWindow->fileSystemModel->filePath(treeView->rootIndex()));
+        pathLineEdit->setText(mainWindow->getFileSystemModel()->filePath(treeView->rootIndex()));
 }
 
 void Pane::setActive(bool active)

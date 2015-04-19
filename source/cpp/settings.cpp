@@ -8,9 +8,9 @@ Settings::Settings(QWidget *parent) :
 
     layout = new QVBoxLayout(this);
 
-    toolBar = ((MainWindow *)parent)->toolBar;
+    mainWindow = (MainWindow *) parent;
     toolBarCheckBox = new QCheckBox("Show Tool Bar");
-    toolBarCheckBox->setChecked(toolBar->isVisible());
+    toolBarCheckBox->setChecked(mainWindow->toolBarVisibility());
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(slotAccepted()));
@@ -22,7 +22,7 @@ Settings::Settings(QWidget *parent) :
 
 void Settings::slotAccepted()
 {
-    toolBar->setVisible(toolBarCheckBox->isChecked());
+    mainWindow->toolBarSetVisible(toolBarCheckBox->isChecked());
     done(1);
 }
 

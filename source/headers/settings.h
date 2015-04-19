@@ -1,6 +1,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include "mainwindow.h"
 #include <QWidget>
 #include <QCheckBox>
 #include <QToolBar>
@@ -19,6 +20,7 @@ private:
     QCheckBox *toolBarCheckBox;
     QToolBar *toolBar;
     QDialogButtonBox *buttonBox;
+    MainWindow *mainWindow;
 
 private slots:
     void slotAccepted();
