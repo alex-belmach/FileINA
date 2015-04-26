@@ -2,7 +2,6 @@
 #include "mainwindow.h"
 #include "pane.h"
 #include <QFormLayout>
-#include <QLabel>
 #include <QDateTime>
 
 Properties::Properties(QWidget *parent) :
@@ -19,12 +18,15 @@ Properties::Properties(QWidget *parent) :
     if (mainWindow->viewIsFocused(focus, false))
     {
         view = (QAbstractItemView *)focus;
-        QFileInfo fileInfo = mainWindow->getFileSystemModel()->fileInfo(view->selectionModel()->selectedIndexes().at(0));
+        fileInfo = mainWindow->getFileSystemModel()->fileInfo(view->selectionModel()->selectedIndexes().at(0));
         QLabel *nameLabel = new QLabel(fileInfo.fileName());
         formLayout->addRow("Name:", nameLabel);
         QLabel *pathLabel = new QLabel(fileInfo.path());
         formLayout->addRow("Path:", pathLabel);
-        QLabel *sizeLabel = new QLabel(QString::number(fileInfo.size() / 1024) + " Kb (" + QString::number(fileInfo.size()) + " bytes)");
+        quint64 size = 0;
+        if (!fileInfo.isDir())
+            size = fileInfo.size();
+        sizeLabel = new QLabel(QString::number(size / 1024) + " Kb (" + QString::number(size) + " bytes)");
         formLayout->addRow("Size:", sizeLabel); //for dirs and Gb, Mb etc..
         QLabel *createdLabel = new QLabel(fileInfo.created().toString());
         formLayout->addRow("Created:", createdLabel);
@@ -38,6 +40,22 @@ Properties::Properties(QWidget *parent) :
     layout->addLayout(formLayout);
     layout->addWidget(buttonOk);
     setLayout(layout);
+}
+
+void Properties::slotDirSize()
+{
+    if (fileInfo.isDir())
+    {
+        result = 0;
+        QDirIterator it(fileInfo.absoluteFilePath(), QDirIterator::Subdirectories);
+        while (it.hasNext())
+        {
+            QFileInfo fileInfo(it.next());
+            if (fileInfo.isFile())
+            result += fileInfo.size();
+            sizeLabel->setText(QString::number(result / 1024) + " Kb (" + QString::number(result) + " bytes)");
+        }
+    }
 }
 
 void Properties::slotAccepted()

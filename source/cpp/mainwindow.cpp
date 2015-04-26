@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -7,6 +8,8 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle("FileINA");
 
     createMenusAndActions();
+
+    settings = new QSettings("Livorni", "FileINA");
 
     splitter = new QSplitter(this);
 
@@ -25,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     dirTreeView->hideColumn(1);
     dirTreeView->hideColumn(2);
     dirTreeView->hideColumn(3);
+    dirTreeView->setEditTriggers(QAbstractItemView::EditKeyPressed | QAbstractItemView::SelectedClicked);
    // dirTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
    // connect(dirTreeView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slotContextMenu(const QPoint &)));
 
@@ -41,7 +45,10 @@ MainWindow::MainWindow(QWidget *parent) :
     splitter->setHandleWidth(3);
     this->setCentralWidget(splitter);
 
+    connect(QApplication::clipboard(), SIGNAL(changed(QClipboard::Mode)), this, SLOT(slotClipboardChanged()));
     connect(qApp, SIGNAL(focusChanged(QWidget*, QWidget*)), SLOT(slotFocusChanged(QWidget*, QWidget*)));
+
+    restoreSettings();
 }
 
 void MainWindow::slotContextMenu(const QPoint& pos)
@@ -182,6 +189,7 @@ void MainWindow::createMenusAndActions() //add actions icons
     viewMenu = menuBar->addMenu("View");
     viewMenu->addAction(tableViewAction);
     viewMenu->addAction(listViewAction);
+    viewMenu->addAction(showHiddenAction);
 
     helpMenu = menuBar->addMenu("Help");
     helpMenu->addAction(aboutAction);
@@ -198,6 +206,7 @@ void MainWindow::createMenusAndActions() //add actions icons
     contextMenu->addAction(cutAction);
     contextMenu->addAction(pasteAction);
     contextMenu->addSeparator();
+    contextMenu->addAction(newFolderAction);
     contextMenu->addAction(deleteAction);
     contextMenu->addSeparator();
     contextMenu->addAction(propertiesAction);
@@ -309,12 +318,21 @@ void MainWindow::slotCut()
 void MainWindow::slotPaste()
 {
     QWidget* focus(focusWidget());
+    qDebug() << QApplication::clipboard()->mimeData()->text();
     Qt::DropAction copyOrCut(pasteAction->data().toBool() ? Qt::MoveAction : Qt::CopyAction);
     if (getActivePane()->isFocused(focus, false))
         fileSystemModel->dropMimeData(QApplication::clipboard()->mimeData(), copyOrCut, 0, 0, qobject_cast<QAbstractItemView *>(focus)->rootIndex());
     else
         if (focus == dirTreeView)
             fileSystemModel->dropMimeData(QApplication::clipboard()->mimeData(), copyOrCut, 0, 0, fileSystemProxyModel->mapToSource(dirTreeView->currentIndex()));
+}
+
+void MainWindow::slotClipboardChanged()
+{
+    if (QApplication::clipboard()->mimeData()->hasUrls())
+        pasteAction->setEnabled(true);
+    else
+        pasteAction->setEnabled(false);
 }
 
 void MainWindow::showContextMenu(QPoint pos)
@@ -335,6 +353,7 @@ void MainWindow::slotListView()
 void MainWindow::slotShowProperties()
 {
     Properties prop(this);
+    QTimer::singleShot(100, &prop, SLOT(slotDirSize()));
     prop.exec();
 }
 
@@ -349,6 +368,43 @@ void MainWindow::slotShowHidden()
 QFileSystemModel* MainWindow::getFileSystemModel()
 {
     return fileSystemModel;
+}
+
+void MainWindow::saveSettings()
+{
+    settings->setValue("Geometry", saveGeometry());
+    settings->setValue("ToolBar", toolBar->isVisible());
+    settings->setValue("Splitter", splitter->saveState());
+    settings->setValue("LeftPaneIsActive", leftPane->isActive());
+    settings->setValue("LeftPanePath", leftPane->getPath());
+    settings->setValue("LeftPaneListHeader", leftPane->getHeader()->saveState());
+    settings->setValue("LeftPaneViewMode", leftPane->getStackedWidget()->currentIndex());
+    settings->setValue("RightPanePath", rightPane->getPath());
+    settings->setValue("RightPaneListHeader", rightPane->getHeader()->saveState());
+    settings->setValue("RightPaneViewMode", rightPane->getStackedWidget()->currentIndex());
+    settings->setValue("ShowHidden", showHiddenAction->isChecked());
+}
+
+void MainWindow::restoreSettings()
+{
+    restoreGeometry(settings->value("Geometry").toByteArray());
+    toolBar->setVisible(settings->value("ToolBar", QVariant(false)).toBool());
+    splitter->restoreState(settings->value("Splitter").toByteArray());
+    setActivePane(settings->value("LeftPaneIsActive", 1).toBool() ? leftPane : rightPane);
+    leftPane->changeTo(settings->value("LeftPanePath", "").toString());
+    leftPane->getTreeView()->header()->restoreState(settings->value("LeftPaneListHeader").toByteArray());
+    leftPane->setViewMode(settings->value("LeftPaneViewMode", 0).toInt());
+    rightPane->changeTo(settings->value("RightPanePath", "").toString());
+    rightPane->getTreeView()->header()->restoreState(settings->value("RightPaneListHeader").toByteArray());
+    rightPane->setViewMode(settings->value("RightPaneViewMode", 0).toInt());
+    showHiddenAction->setChecked(settings->value("ShowHidden", false).toBool());
+    slotShowHidden();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    saveSettings();
+    event->accept();
 }
 
 bool FileSystemFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const

@@ -97,6 +97,11 @@ void Pane::setViewMode(const ViewMode view)
     stackedWidget->setCurrentIndex(view);
 }
 
+void Pane::setViewMode(const int view)
+{
+    stackedWidget->setCurrentIndex(view);
+}
+
 bool Pane::isFocused(QWidget* focus, bool withPath)
 {
     if (withPath)
@@ -119,4 +124,29 @@ QAbstractItemView* Pane::getCurrentWidget()
 int Pane::getCurrentView()
 {
     return stackedWidget->currentIndex();
+}
+
+bool Pane::isActive()
+{
+    return active;
+}
+
+QString Pane::getPath()
+{
+    return pathLineEdit->text();
+}
+
+QHeaderView* Pane::getHeader()
+{
+    return treeView->header();
+}
+
+QStackedWidget* Pane::getStackedWidget()
+{
+    return stackedWidget;
+}
+
+QTreeView* Pane::getTreeView()
+{
+    return treeView;
 }

@@ -15,12 +15,16 @@
 #include <QAction>
 #include <QMessageBox>
 #include <QClipboard>
+#include <QSettings>
+#include <QMimeData>
+#include <QCloseEvent>
+#include <QTimer>
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-public:                                 //get rid of public variables
+public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
@@ -61,11 +65,15 @@ private:
     QAction *propertiesAction;
     QAction *showHiddenAction;
     QActionGroup *viewActionGroup;
+    QSettings *settings;
 
     void createMenusAndActions();
     void setActivePane(Pane *);
     Pane* getActivePane();
     void updateViewActions();
+    void saveSettings();
+    void restoreSettings();
+    void closeEvent(QCloseEvent *);
 
 private slots:
     void slotFocusChanged(QWidget*, QWidget*);
@@ -82,6 +90,7 @@ private slots:
     void slotShowProperties();
     void slotContextMenu(const QPoint &);
     void slotShowHidden();
+    void slotClipboardChanged();
 };
 
 class FileSystemFilterProxyModel : public QSortFilterProxyModel

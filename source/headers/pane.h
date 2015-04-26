@@ -23,10 +23,16 @@ public:
     explicit Pane(QWidget* parent = 0);
     void setActive(bool );
     void setViewMode(const ViewMode );
+    void setViewMode(const int );
     void changeTo(const QString& );
     bool isFocused(QWidget* , bool);
     int getCurrentView();
     QAbstractItemView* getCurrentWidget();
+    bool isActive();
+    QString getPath();
+    QHeaderView* getHeader();
+    QStackedWidget* getStackedWidget();
+    QTreeView* getTreeView();
 
 private:
     bool active;
