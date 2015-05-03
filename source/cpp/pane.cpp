@@ -13,6 +13,10 @@ Pane::Pane(QWidget *parent):
     treeView->setModel(mainWindow->getFileSystemModel());
     treeView->setFrameStyle(QFrame::NoFrame | QFrame::Plain);
     treeView->setRootIsDecorated(false);
+    treeView->setItemsExpandable(false);
+    treeView->setDragDropMode(QAbstractItemView::DragDrop);
+    treeView->setDefaultDropAction(Qt::MoveAction);
+    treeView->setDropIndicatorShown(true);
     treeView->setSelectionMode(QAbstractItemView::ExtendedSelection); //find simple selection
     //treeView->setSortingEnabled(true); //think about unsynch sorting
     treeView->setEditTriggers(QAbstractItemView::SelectedClicked);
@@ -22,6 +26,10 @@ Pane::Pane(QWidget *parent):
 
     listView = new QListView(this);
     listView->setModel(mainWindow->getFileSystemModel());
+    listView->setWrapping(true);
+    listView->setDragDropMode(QAbstractItemView::DragDrop);
+    listView->setDefaultDropAction(Qt::MoveAction);
+    listView->setDropIndicatorShown(true);
     listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     listView->setEditTriggers(QAbstractItemView::SelectedClicked);
     connect(listView, SIGNAL(activated(QModelIndex)), this, SLOT(slotDoubleClicked(QModelIndex)));

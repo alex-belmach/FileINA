@@ -29,8 +29,9 @@ MainWindow::MainWindow(QWidget *parent) :
     dirTreeView->hideColumn(2);
     dirTreeView->hideColumn(3);
     dirTreeView->setEditTriggers(QAbstractItemView::EditKeyPressed | QAbstractItemView::SelectedClicked);
-   // dirTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
-   // connect(dirTreeView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slotContextMenu(const QPoint &)));
+    dirTreeView->setDragDropMode(QAbstractItemView::DropOnly);
+    dirTreeView->setDefaultDropAction(Qt::MoveAction);
+    dirTreeView->setDropIndicatorShown(true);
 
     dirSelectionModel = dirTreeView->selectionModel();
     connect(dirSelectionModel, SIGNAL(currentChanged(QModelIndex, QModelIndex)), this, SLOT(slotDirSelectionChanged(QModelIndex, QModelIndex)));
@@ -123,45 +124,45 @@ void MainWindow::createMenusAndActions() //add actions icons
 {
     menuBar = new QMenuBar(0);
 
-    aboutAction = new QAction("About", this);
+    aboutAction = new QAction(QIcon::fromTheme("about", QIcon(":/Images/About.ico")), "About", this);
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(slotShowAbout()));
 
-    newFolderAction = new QAction("New Folder", this);
+    newFolderAction = new QAction(QIcon::fromTheme("new", QIcon(":/Images/NewFolder.ico")), "New Folder", this);
     newFolderAction->setShortcut(QKeySequence::New);
     connect(newFolderAction, SIGNAL(triggered()), this, SLOT(slotNewFolder()));
 
-    deleteAction = new QAction("Delete", this);
+    deleteAction = new QAction(QIcon::fromTheme("delete", QIcon(":/Images/Delete.ico")), "Delete", this);
     deleteAction->setShortcut(QKeySequence::Delete);
     connect(deleteAction, SIGNAL(triggered()), this, SLOT(slotDelete()));
 
-    settingsAction = new QAction("Settings", this);
+    settingsAction = new QAction(QIcon::fromTheme("settings", QIcon(":/Images/Preferences.ico")), "Settings", this);
     connect(settingsAction, SIGNAL(triggered()), this, SLOT(slotSettings()));
 
-    exitAction = new QAction("Exit", this);
+    exitAction = new QAction(QIcon::fromTheme("exit", QIcon(":/Images/Exit.png")), "Exit", this);
     exitAction->setShortcut(QKeySequence::Quit);
     connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
 
-    copyAction = new QAction("Copy", this);
+    copyAction = new QAction(QIcon::fromTheme("copy", QIcon(":/Images/Copy.png")), "Copy", this);
     copyAction->setShortcut(QKeySequence::Copy);
     connect(copyAction, SIGNAL(triggered()), this, SLOT(slotCopy()));
 
-    pasteAction = new QAction("Paste", this);
+    pasteAction = new QAction(QIcon::fromTheme("paste", QIcon(":/Images/Paste.png")), "Paste", this);
     pasteAction->setShortcut(QKeySequence::Paste);
     connect(pasteAction, SIGNAL(triggered()), this, SLOT(slotPaste()));
 
-    cutAction = new QAction("Cut", this);
+    cutAction = new QAction(QIcon::fromTheme("cut", QIcon(":/Images/Cut.png")), "Cut", this);
     cutAction->setShortcut(QKeySequence::Cut);
     connect(cutAction, SIGNAL(triggered()), this, SLOT(slotCut()));
 
-    propertiesAction = new QAction("Properties", this);
+    propertiesAction = new QAction(QIcon::fromTheme("properties", QIcon(":/Images/Properties.ico")), "Properties", this);
     propertiesAction->setShortcut(QKeySequence::Preferences);
     connect(propertiesAction, SIGNAL(triggered()), this, SLOT(slotShowProperties()));
 
-    tableViewAction = new QAction("Table View", this);
+    tableViewAction = new QAction(QIcon::fromTheme("tableview", QIcon(":/Images/TableView.ico")), "Table View", this);
     tableViewAction->setCheckable(true);
     connect(tableViewAction, SIGNAL(triggered()), this, SLOT(slotTableView()));
 
-    listViewAction = new QAction("List View", this);
+    listViewAction = new QAction(QIcon::fromTheme("listview", QIcon(":/Images/ListView.ico")), "List View", this);
     listViewAction->setCheckable(true);
     connect(listViewAction, SIGNAL(triggered()), this, SLOT(slotListView()));
 
@@ -318,7 +319,7 @@ void MainWindow::slotCut()
 void MainWindow::slotPaste()
 {
     QWidget* focus(focusWidget());
-    qDebug() << QApplication::clipboard()->mimeData()->text();
+    //qDebug() << QApplication::clipboard()->mimeData()->text();
     Qt::DropAction copyOrCut(pasteAction->data().toBool() ? Qt::MoveAction : Qt::CopyAction);
     if (getActivePane()->isFocused(focus, false))
         fileSystemModel->dropMimeData(QApplication::clipboard()->mimeData(), copyOrCut, 0, 0, qobject_cast<QAbstractItemView *>(focus)->rootIndex());

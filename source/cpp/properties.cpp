@@ -26,7 +26,16 @@ Properties::Properties(QWidget *parent) :
         quint64 size = 0;
         if (!fileInfo.isDir())
             size = fileInfo.size();
-        sizeLabel = new QLabel(QString::number(size / 1024) + " Kb (" + QString::number(size) + " bytes)");
+        if (size < 1024)
+            sizeLabel = new QLabel(QString::number(size) + " bytes");
+        else
+            if (size < 1048576)
+                sizeLabel = new QLabel(QString::number(size / 1024) + " Kb (" + QString::number(size) + " bytes)");
+            else
+                if (size < 1073741824)
+                    sizeLabel = new QLabel(QString::number(size / 1048576) + " Mb (" + QString::number(size) + " bytes)");
+                else
+                    sizeLabel = new QLabel(QString::number(size / 1073741824) + " Gb (" + QString::number(size) + " bytes)");
         formLayout->addRow("Size:", sizeLabel); //for dirs and Gb, Mb etc..
         QLabel *createdLabel = new QLabel(fileInfo.created().toString());
         formLayout->addRow("Created:", createdLabel);
@@ -53,7 +62,16 @@ void Properties::slotDirSize()
             QFileInfo fileInfo(it.next());
             if (fileInfo.isFile())
             result += fileInfo.size();
-            sizeLabel->setText(QString::number(result / 1024) + " Kb (" + QString::number(result) + " bytes)");
+            if (result < 1024)
+                sizeLabel->setText(QString::number(result) + " bytes");
+            else
+                if (result < 1048576)
+                    sizeLabel->setText(QString::number((double)(result / 1024)) + " Kb (" + QString::number(result) + " bytes)");
+                else
+                    if (result < 1073741824)
+                        sizeLabel->setText(QString::number((double)(result / 1048576)) + " Mb (" + QString::number(result) + " bytes)");
+                    else
+                        sizeLabel->setText(QString::number((double)(result / 1073741824)) + " Gb (" + QString::number(result) + " bytes)");
         }
     }
 }

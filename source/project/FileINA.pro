@@ -23,3 +23,6 @@ HEADERS  += mainwindow.h \
     properties.h
 
 FORMS    +=
+
+RESOURCES += \
+    Resources.qrc
