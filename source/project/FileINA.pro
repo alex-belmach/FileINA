@@ -15,14 +15,23 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     pane.cpp \
     settings.cpp \
-    properties.cpp
+    properties.cpp \
+    pastethread.cpp \
+    deletethread.cpp \
+    copythread.cpp \
+    copyprogress.cpp
 
 HEADERS  += mainwindow.h \
     pane.h \
     settings.h \
-    properties.h
+    properties.h \
+    pastethread.h \
+    deletethread.h \
+    copythread.h \
+    copyprogress.h
 
-FORMS    +=
+FORMS    += \
+    copyprogress.ui
 
 RESOURCES += \
     Resources.qrc

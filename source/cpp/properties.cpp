@@ -66,7 +66,7 @@ void Properties::slotDirSize()
                 sizeLabel->setText(QString::number(result) + " bytes");
             else
                 if (result < 1048576)
-                    sizeLabel->setText(QString::number((double)(result / 1024)) + " Kb (" + QString::number(result) + " bytes)");
+                    sizeLabel->setText(QString::number((double)(result / 1024), 'g', 1) + " Kb (" + QString::number(result) + " bytes)");
                 else
                     if (result < 1073741824)
                         sizeLabel->setText(QString::number((double)(result / 1048576)) + " Mb (" + QString::number(result) + " bytes)");

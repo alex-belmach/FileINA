@@ -8,6 +8,8 @@
 #include <QStackedWidget>
 #include <QVBoxLayout>
 #include <QProcess>
+#include <QUrl>
+#include <QDesktopServices>
 
 class MainWindow;
 

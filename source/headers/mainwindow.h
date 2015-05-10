@@ -4,6 +4,10 @@
 #include "pane.h"
 #include "settings.h"
 #include "properties.h"
+#include "pastethread.h"
+#include "deletethread.h"
+#include "copythread.h"
+#include "copyprogress.h"
 #include <QMainWindow>
 #include <QSplitter>
 #include <QTreeView>
@@ -91,6 +95,7 @@ private slots:
     void slotContextMenu(const QPoint &);
     void slotShowHidden();
     void slotClipboardChanged();
+    void slotDeleteError();
 };
 
 class FileSystemFilterProxyModel : public QSortFilterProxyModel

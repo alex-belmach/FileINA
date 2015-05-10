@@ -198,6 +198,8 @@ void MainWindow::createMenusAndActions() //add actions icons
     setMenuBar(menuBar);
 
     toolBar = addToolBar("Tools");
+    toolBar->addAction(tableViewAction);
+    toolBar->addAction(listViewAction);
 
     contextMenu = new QMenu(this);
     contextMenu->addAction(tableViewAction);
@@ -216,7 +218,7 @@ void MainWindow::createMenusAndActions() //add actions icons
 void MainWindow::slotShowAbout()
 {
     QMessageBox::about(this, "About FileINA", "<h2>FileINA</h2>"
-                       "<p><em>Version 0.2</em>"
+                       "<p><em>Version 0.5</em>"
                        "<p>File Manager<br>"
                        "2015 by Alexey Belmach<br>");
 }
@@ -243,7 +245,6 @@ void MainWindow::slotDelete()
 {
     QModelIndexList selectionList;
     bool yesToAll = false;
-    bool ok = false;
     bool confirm = true;
 
     QWidget* focus(focusWidget());
@@ -253,34 +254,41 @@ void MainWindow::slotDelete()
         view = (QAbstractItemView *)focus;
         selectionList = view->selectionModel()->selectedIndexes();
     }
-
-    for (int i = 0; i < selectionList.count(); i++)
+    quint64 toAdd = getActivePane()->getCurrentView() == Pane::Table ? 4 : 1;
+    for (int i = 0; i < selectionList.count(); i += toAdd)
     {
-        QFileInfo file(fileSystemModel->filePath(selectionList.at(i)));
-        if (file.isWritable())
+        QFileInfo fileInfo(fileSystemModel->filePath(selectionList.at(i)));
+        if (fileInfo.isSymLink())
         {
-            if (file.isSymLink())
-                ok = QFile::remove(file.filePath());
-            else
-            {
-                if (!yesToAll)
-                    if (confirm)
-                    {
-                        int answer = QMessageBox::information(this, "Delete file", "Are you sure you want to delete<p><b>\"" + file.filePath() + "\"</b>?", QMessageBox::Yes | QMessageBox::No | QMessageBox::YesToAll);
-                        if (answer == QMessageBox::YesToAll)
-                            yesToAll = true;
-                        if (answer == QMessageBox::No)
-                            return;
-                    }
-                ok = fileSystemModel->remove(selectionList.at(i));
-            }
+            qDebug() << "isSymLink";
+            DeleteThread *thread = new DeleteThread(fileInfo);
+            connect(thread, SIGNAL(DeleteError()), this, SLOT(slotDeleteError()));
+            thread->start();
         }
-        else if (file.isSymLink())
-            ok = QFile::remove(file.filePath());
+        else
+        {
+            qDebug() << "!isSymLink";
+            if (!yesToAll)
+                if (confirm)
+                {
+                    int answer = QMessageBox::information(this, "Delete file", "Are you sure you want to delete<p><b>\"" + fileInfo.filePath() + "\"</b>?", QMessageBox::Yes | QMessageBox::Cancel | QMessageBox::YesToAll);
+                    if (answer == QMessageBox::YesToAll)
+                        yesToAll = true;
+                    if (answer == QMessageBox::Cancel)
+                        return;
+                }
+            DeleteThread *thread = new DeleteThread(selectionList.at(i), fileSystemModel, fileInfo);
+            connect(thread, SIGNAL(DeleteError()), this, SLOT(slotDeleteError()));
+            thread->start();
+        }
     }
-    if (!ok)
-        QMessageBox::information(this, "Delete failed", "Some files could not be deleted.");
     return;
+}
+
+void MainWindow::slotDeleteError()
+{
+    QMessageBox::information(this, "Delete failed", "Some files could not be deleted.");
+return;
 }
 
 void MainWindow::slotCopy()
@@ -322,10 +330,31 @@ void MainWindow::slotPaste()
     //qDebug() << QApplication::clipboard()->mimeData()->text();
     Qt::DropAction copyOrCut(pasteAction->data().toBool() ? Qt::MoveAction : Qt::CopyAction);
     if (getActivePane()->isFocused(focus, false))
-        fileSystemModel->dropMimeData(QApplication::clipboard()->mimeData(), copyOrCut, 0, 0, qobject_cast<QAbstractItemView *>(focus)->rootIndex());
+        if (copyOrCut == Qt::CopyAction)
+        {
+            CopyProgress *progress = new CopyProgress();
+            CopyThread *thread = new CopyThread(getActivePane()->getPath(), fileSystemModel, qobject_cast<QAbstractItemView *>(focus)->rootIndex());
+            connect(thread, SIGNAL(setMaxTotal(quint64)), progress, SLOT(slotSetMaxTotal(quint64)));
+            connect(thread, SIGNAL(setCurrentTotal(quint64)), progress, SLOT(slotSetCurrentTotal(quint64)));
+            connect(thread, SIGNAL(setFromTo(QString,QString)), progress, SLOT(slotSetFromTo(QString, QString)));
+            connect(thread, SIGNAL(setMaxSize(quint64, quint64)), progress, SLOT(slotSetMaxSize(quint64, quint64)));
+            connect(thread, SIGNAL(setCurrentSize(quint64)), progress, SLOT(slotSetCurrentSize(quint64)));
+            connect(thread, SIGNAL(closeProgressBar()), progress, SLOT(deleteLater()));
+            thread->start();
+            progress->show();
+        }
+        else
+        {
+            PasteThread *thread = new PasteThread(copyOrCut, qobject_cast<QAbstractItemView *>(focus)->rootIndex(), fileSystemModel);
+            thread->start();
+        }
     else
-        if (focus == dirTreeView)
-            fileSystemModel->dropMimeData(QApplication::clipboard()->mimeData(), copyOrCut, 0, 0, fileSystemProxyModel->mapToSource(dirTreeView->currentIndex()));
+        if (focus == dirTreeView && copyOrCut == Qt::MoveAction)
+        {
+            PasteThread *thread = new PasteThread(copyOrCut, fileSystemProxyModel->mapToSource(dirTreeView->currentIndex()), fileSystemModel);
+            thread->start();
+        }
+
 }
 
 void MainWindow::slotClipboardChanged()

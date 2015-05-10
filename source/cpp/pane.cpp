@@ -60,10 +60,10 @@ void Pane::slotDoubleClicked(QModelIndex index)
             QProcess *process = new QProcess(this);
             process->startDetached(fileInfo.absoluteFilePath());
         }
-    else //doesn't work
+    else
         {
-            QProcess *process = new QProcess(this);
-            process->startDetached("\"" + fileInfo.absoluteFilePath() + "\"");
+            QUrl fileUrl = QUrl::fromUserInput(fileInfo.absoluteFilePath());
+            QDesktopServices::openUrl(fileUrl);
         }
 }
 
