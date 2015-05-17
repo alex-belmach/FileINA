@@ -14,11 +14,13 @@
 class CopyThread : public QThread
 {
     Q_OBJECT
-    QModelIndex focus;
-    QFileSystemModel *fileSystemModel;
-    QString strTo;
-    QVector<QString> *copyVector;
+
+    bool exitFlag;
     quint64 totalSize, currentTotalSize;
+    QFileSystemModel *fileSystemModel;
+    QModelIndex focus;
+    QString strTo, filePath, fileName, toPath;
+    QVector<QString> *copyVector;
 
 public:
     explicit CopyThread(QString path, QFileSystemModel *model, QModelIndex focus, QObject *parent = 0);
@@ -31,6 +33,9 @@ signals:
     void setMaxSize(quint64, quint64);
     void setCurrentSize(quint64);
     void closeProgressBar();
+
+public slots:
+    void slotAbort();
 };
 
 #endif // COPYTHREAD_H

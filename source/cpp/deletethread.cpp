@@ -20,13 +20,15 @@ void DeleteThread::run()
 {
     bool ok;
     QFile *file = new QFile(fileInfo.absoluteFilePath());
+
     file->open(QIODevice::WriteOnly);
     file->setPermissions(QFile::ReadOwner|QFile::WriteOwner|QFile::ExeOwner|QFile::ReadGroup|QFile::ExeGroup|QFile::ReadOther|QFile::ExeOther);
     file->close();
+
     if (isSymLink)
         ok = QFile::remove(fileInfo.filePath());
     else
         ok = fileSystemModel->remove(selectionIndex);
     if (!ok)
-        DeleteError();
+        emit DeleteError();
 }

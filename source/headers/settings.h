@@ -12,15 +12,16 @@
 class Settings : public QDialog
 {
     Q_OBJECT
+
 public:
     explicit Settings(QWidget *parent = 0);
 
 private:
-    QVBoxLayout * layout;
-    QCheckBox *toolBarCheckBox;
-    QToolBar *toolBar;
-    QDialogButtonBox *buttonBox;
     MainWindow *mainWindow;
+    QCheckBox *toolBarCheckBox;
+    QDialogButtonBox *buttonBox;
+    QToolBar *toolBar;
+    QVBoxLayout *layout;
 
 private slots:
     void slotAccepted();

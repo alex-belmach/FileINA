@@ -9,10 +9,11 @@
 class DeleteThread : public QThread
 {
     Q_OBJECT
+
+    bool isSymLink;
+    QFileInfo fileInfo;
     QFileSystemModel *fileSystemModel;
     QModelIndex selectionIndex;
-    QFileInfo fileInfo;
-    bool isSymLink;
 
 public:
     DeleteThread(QModelIndex index, QFileSystemModel *model, QFileInfo info, QObject *parent = 0);

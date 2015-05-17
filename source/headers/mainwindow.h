@@ -8,6 +8,7 @@
 #include "deletethread.h"
 #include "copythread.h"
 #include "copyprogress.h"
+#include "findwindow.h"
 #include <QMainWindow>
 #include <QSplitter>
 #include <QTreeView>
@@ -68,6 +69,7 @@ private:
     QAction *listViewAction;
     QAction *propertiesAction;
     QAction *showHiddenAction;
+    QAction *findAction;
     QActionGroup *viewActionGroup;
     QSettings *settings;
 
@@ -96,6 +98,7 @@ private slots:
     void slotShowHidden();
     void slotClipboardChanged();
     void slotDeleteError();
+    void slotShowFindWindow();
 };
 
 class FileSystemFilterProxyModel : public QSortFilterProxyModel

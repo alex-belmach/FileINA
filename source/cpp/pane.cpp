@@ -17,8 +17,7 @@ Pane::Pane(QWidget *parent):
     treeView->setDragDropMode(QAbstractItemView::DragDrop);
     treeView->setDefaultDropAction(Qt::MoveAction);
     treeView->setDropIndicatorShown(true);
-    treeView->setSelectionMode(QAbstractItemView::ExtendedSelection); //find simple selection
-    //treeView->setSortingEnabled(true); //think about unsynch sorting
+    treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     treeView->setEditTriggers(QAbstractItemView::SelectedClicked);
     connect(treeView, SIGNAL(activated(QModelIndex)), this, SLOT(slotDoubleClicked(QModelIndex)));
     treeView->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -67,7 +66,7 @@ void Pane::slotDoubleClicked(QModelIndex index)
         }
 }
 
-void Pane::slotContextMenu(const QPoint& pos)
+void Pane::slotContextMenu(const QPoint &pos)
 {
     mainWindow->showContextMenu(listView->mapToGlobal(pos));
 }
@@ -93,8 +92,8 @@ void Pane::slotPathChanged()
 
 void Pane::setActive(bool active)
 {
-    if (this->active == active) return;
-
+    if (this->active == active)
+        return;
     this->active = active;
     treeView->setAlternatingRowColors(active);
     listView->setAlternatingRowColors(active);
@@ -110,7 +109,7 @@ void Pane::setViewMode(const int view)
     stackedWidget->setCurrentIndex(view);
 }
 
-bool Pane::isFocused(QWidget* focus, bool withPath)
+bool Pane::isFocused(QWidget *focus, bool withPath)
 {
     if (withPath)
         if (focus == pathLineEdit || focus == treeView || focus == listView)

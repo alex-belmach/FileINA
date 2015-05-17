@@ -16,39 +16,42 @@ class MainWindow;
 class Pane: public QFrame
 {
     Q_OBJECT
+
 public:
     enum ViewMode
     {
-        Table, List
+        Table,
+        List
     };
 
     explicit Pane(QWidget* parent = 0);
-    void setActive(bool );
-    void setViewMode(const ViewMode );
-    void setViewMode(const int );
-    void changeTo(const QString& );
-    bool isFocused(QWidget* , bool);
-    int getCurrentView();
-    QAbstractItemView* getCurrentWidget();
+
+    bool isFocused(QWidget *, bool);
     bool isActive();
-    QString getPath();
+    int getCurrentView();
+    void setActive(bool);
+    void setViewMode(const ViewMode);
+    void setViewMode(const int);
+    void changeTo(const QString &);
+    QAbstractItemView* getCurrentWidget();
     QHeaderView* getHeader();
     QStackedWidget* getStackedWidget();
+    QString getPath();
     QTreeView* getTreeView();
 
 private:
     bool active;
     MainWindow *mainWindow;
-    QVBoxLayout *vBoxLayout;
     QLineEdit *pathLineEdit;
-    QTreeView *treeView;
     QListView *listView;
     QStackedWidget *stackedWidget;
+    QTreeView *treeView;
+    QVBoxLayout *vBoxLayout;
 
 private slots:
-    void slotDoubleClicked(QModelIndex );
+    void slotDoubleClicked(QModelIndex);
     void slotPathChanged();
-    void slotContextMenu(const QPoint& );
+    void slotContextMenu(const QPoint &);
 };
 
 #endif // PANE_H

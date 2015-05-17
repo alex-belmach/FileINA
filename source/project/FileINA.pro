@@ -19,7 +19,9 @@ SOURCES += main.cpp\
     pastethread.cpp \
     deletethread.cpp \
     copythread.cpp \
-    copyprogress.cpp
+    copyprogress.cpp \
+    sizethread.cpp \
+    findwindow.cpp
 
 HEADERS  += mainwindow.h \
     pane.h \
@@ -28,10 +30,13 @@ HEADERS  += mainwindow.h \
     pastethread.h \
     deletethread.h \
     copythread.h \
-    copyprogress.h
+    copyprogress.h \
+    sizethread.h \
+    findwindow.h
 
 FORMS    += \
-    copyprogress.ui
+    copyprogress.ui \
+    findwindow.ui
 
 RESOURCES += \
     Resources.qrc

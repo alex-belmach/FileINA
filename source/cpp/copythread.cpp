@@ -1,10 +1,8 @@
 #include "copythread.h"
-#include <QDebug>
 
 #define USELESS_DATA_NUM 8
-#define PROGRESS_BAR_UPDATE_COUNT 2048
+#define PROGRESS_BAR_UPDATE_COUNT 4096
 #define INT32_MAX 2147483647
-
 
 CopyThread::CopyThread(QString path, QFileSystemModel *model, QModelIndex focus, QObject *parent) :
     QThread(parent)
@@ -17,6 +15,7 @@ CopyThread::CopyThread(QString path, QFileSystemModel *model, QModelIndex focus,
     copyVector = new QVector<QString>();
     totalSize = 0;
     currentTotalSize = 0;
+    exitFlag = false;
 }
 
 void CopyThread::run()
@@ -40,36 +39,40 @@ void CopyThread::run()
             totalSize++;
 
     }
-    setMaxTotal(totalSize);
+    emit setMaxTotal(totalSize);
+
     for (int i = 0; i < copyVector->count(); i++)
     {
+        if (exitFlag) break;
         QString strFrom = copyVector->at(i);
         QFileInfo *fileInfo = new QFileInfo(strFrom);
         if (!fileInfo->isDir())
         {
             QFile fileFrom(fileInfo->absoluteFilePath());
-            QFile fileTo(strTo + fileInfo->fileName());
-            setFromTo(fileInfo->absoluteFilePath(), strTo + fileInfo->fileName());
+            toPath = strTo + fileInfo->fileName();
+            QFile fileTo(toPath);
+            emit setFromTo(fileInfo->absoluteFilePath(), toPath);
             quint64 size = fileInfo->size(), ratio = 1;
             if (size > INT32_MAX)
                 ratio = size / INT32_MAX + 1;
-            setMaxSize(fileInfo->size(), ratio);
+            emit setMaxSize(fileInfo->size(), ratio);
+
             fileFrom.open(QIODevice::ReadOnly);
             fileTo.open(QIODevice::WriteOnly);
             quint64 bytesCopied, totalBytesCopied = 0, num = 0;
-            while (!fileFrom.atEnd())
+            while (!fileFrom.atEnd() && !exitFlag)
             {
                 num++;
                 bytesCopied = fileTo.write(fileFrom.readLine());
                 totalBytesCopied += bytesCopied;
                 if (num % PROGRESS_BAR_UPDATE_COUNT == 0)
                 {
-                    setCurrentSize(totalBytesCopied);
+                    emit setCurrentSize(totalBytesCopied);
                 }
             }
             fileFrom.close();
             fileTo.close();
-            setCurrentTotal(++currentTotalSize);
+            emit setCurrentTotal(++currentTotalSize);
         }
         else
         {
@@ -81,10 +84,10 @@ void CopyThread::run()
             dir.mkdir(strTo + strFrom.right(strFrom.length() - pathNum));
             QDirIterator itr(strFrom, QDirIterator::Subdirectories);
 
-            while (itr.hasNext())
+            while (itr.hasNext() && !exitFlag)
             {
-                QString filePath = itr.next();
-                QString fileName = itr.fileName();
+                filePath = itr.next();
+                fileName = itr.fileName();
                 if ((fileName != ".") && (fileName != "..") && (fileName != ""))
                 {
                     if (itr.fileInfo().isDir())
@@ -95,34 +98,41 @@ void CopyThread::run()
                     else
                     {
                         QFile fileFrom(filePath);
-                        QString toPath = strTo + filePath.right(filePath.length() - pathNum);
+                        toPath = strTo + filePath.right(filePath.length() - pathNum);
                         QFile fileTo(toPath);
-                        setFromTo(filePath, toPath);
+                        emit setFromTo(filePath, toPath);
                         quint64 size = fileFrom.size(), ratio = 1;
                         if (size > INT32_MAX)
                             ratio = size / INT32_MAX + 1;
-                        setMaxSize(fileFrom.size(), ratio);
+                        emit setMaxSize(fileFrom.size(), ratio);
+
                         fileFrom.open(QIODevice::ReadOnly);
                         fileTo.open(QIODevice::WriteOnly);
                         quint64 bytesCopied, totalBytesCopied = 0, num = 0;
-                        while (!fileFrom.atEnd())
+                        while (!fileFrom.atEnd() && !exitFlag)
                         {
                             num++;
                             bytesCopied = fileTo.write(fileFrom.readLine());
                             totalBytesCopied += bytesCopied;
                             if (num % PROGRESS_BAR_UPDATE_COUNT == 0)
                             {
-                                setCurrentSize(totalBytesCopied);
+                                emit setCurrentSize(totalBytesCopied);
                             }
                         }
                         fileFrom.close();
                         fileTo.close();
                     }
                 }
-                setCurrentTotal(++currentTotalSize);
+                emit setCurrentTotal(++currentTotalSize);
             }
         }
     }
-    closeProgressBar();
-    return;
+    if (exitFlag)
+        QFile(toPath).remove();
+    emit closeProgressBar();
+}
+
+void CopyThread::slotAbort()
+{
+    exitFlag = true;
 }

@@ -1,6 +1,11 @@
 #ifndef PROPERTIES_H
 #define PROPERTIES_H
 
+#include "sizethread.h"
+#include "mainwindow.h"
+#include "pane.h"
+#include <QFormLayout>
+#include <QDateTime>
 #include <QDialog>
 #include <QDir>
 #include <QLabel>
@@ -10,9 +15,11 @@ class Properties : public QDialog
 {
     Q_OBJECT
 
+    quint64 result;
+    SizeThread *thread;
     QFileInfo fileInfo;
     QLabel *sizeLabel;
-    quint64 result;
+    QTimer *timer;
 
 public:
     explicit Properties(QWidget *parent = 0);
@@ -20,6 +27,7 @@ public:
 private slots:
     void slotAccepted();
     void slotDirSize();
+    void slotChangeLabel(QString);
 };
 
 #endif // PROPERTIES_H

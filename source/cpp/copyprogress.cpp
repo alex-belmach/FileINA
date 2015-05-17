@@ -1,16 +1,21 @@
 #include "copyprogress.h"
 #include "ui_copyprogress.h"
-#include <QDebug>
 
 CopyProgress::CopyProgress(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::CopyProgress)
 {
     ui->setupUi(this);
-    ui->totalProgressBar->setValue(0);
-    ui->fileProgressBar->setValue(0);
     this->setWindowTitle("Copying files...");
     this->setWindowFlags(Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::Tool);
+    ui->totalProgressBar->setValue(0);
+    ui->fileProgressBar->setValue(0);
+    connect(ui->abortButton, SIGNAL(clicked()), this, SLOT(slotAbortCopy()));
+}
+
+void CopyProgress::slotAbortCopy()
+{
+    emit abortCopy();
 }
 
 CopyProgress::~CopyProgress()

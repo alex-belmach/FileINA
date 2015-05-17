@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -50,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(qApp, SIGNAL(focusChanged(QWidget*, QWidget*)), SLOT(slotFocusChanged(QWidget*, QWidget*)));
 
     restoreSettings();
+    qApp->processEvents();
 }
 
 void MainWindow::slotContextMenu(const QPoint& pos)
@@ -120,7 +120,7 @@ void MainWindow::updateViewActions()
         listViewAction->setChecked(true);
 }
 
-void MainWindow::createMenusAndActions() //add actions icons
+void MainWindow::createMenusAndActions()
 {
     menuBar = new QMenuBar(0);
 
@@ -170,9 +170,13 @@ void MainWindow::createMenusAndActions() //add actions icons
     viewActionGroup->addAction(tableViewAction);
     viewActionGroup->addAction(listViewAction);
 
-    showHiddenAction = new QAction("Show Hidden", this);
+    showHiddenAction = new QAction("show hidden", this);
     showHiddenAction->setCheckable(true);
     connect(showHiddenAction, SIGNAL(triggered()), this, SLOT(slotShowHidden()));
+
+    findAction = new QAction("find", this);
+    findAction->setShortcuts(QKeySequence::Find);
+    connect(findAction, SIGNAL(triggered()), this, SLOT(slotShowFindWindow()));
 
     fileMenu = menuBar->addMenu("File");
     fileMenu->addAction(deleteAction);
@@ -200,6 +204,8 @@ void MainWindow::createMenusAndActions() //add actions icons
     toolBar = addToolBar("Tools");
     toolBar->addAction(tableViewAction);
     toolBar->addAction(listViewAction);
+    toolBar->addSeparator();
+    toolBar->addAction(findAction);
 
     contextMenu = new QMenu(this);
     contextMenu->addAction(tableViewAction);
@@ -218,7 +224,7 @@ void MainWindow::createMenusAndActions() //add actions icons
 void MainWindow::slotShowAbout()
 {
     QMessageBox::about(this, "About FileINA", "<h2>FileINA</h2>"
-                       "<p><em>Version 0.5</em>"
+                       "<p><em>Version 0.9</em>"
                        "<p>File Manager<br>"
                        "2015 by Alexey Belmach<br>");
 }
@@ -226,12 +232,20 @@ void MainWindow::slotShowAbout()
 void MainWindow::slotNewFolder()
 {
     QAbstractItemView *currentView = getActivePane()->getCurrentWidget();
-    QModelIndex newFolder = fileSystemModel->mkdir(currentView->rootIndex(), QString("New Folder"));
-    if (newFolder.isValid())
+    int newFolderNum = 0;
+    QModelIndex newFolder;
+
+    do
     {
-        currentView->selectionModel()->setCurrentIndex(newFolder, QItemSelectionModel::ClearAndSelect);
-        currentView->edit(newFolder);
-    }
+        if (!newFolderNum)
+            newFolder = fileSystemModel->mkdir(currentView->rootIndex(), QString("New Folder"));
+        else
+            newFolder = fileSystemModel->mkdir(currentView->rootIndex(), QString("New Folder(%1)").arg(newFolderNum));
+        newFolderNum++;
+    }while(!newFolder.isValid());
+
+    currentView->selectionModel()->setCurrentIndex(newFolder, QItemSelectionModel::ClearAndSelect);
+    currentView->edit(newFolder);
 }
 
 void MainWindow::slotSettings()
@@ -239,7 +253,6 @@ void MainWindow::slotSettings()
     Settings settings(this);
     settings.exec();
 }
-
 
 void MainWindow::slotDelete()
 {
@@ -254,20 +267,19 @@ void MainWindow::slotDelete()
         view = (QAbstractItemView *)focus;
         selectionList = view->selectionModel()->selectedIndexes();
     }
+
     quint64 toAdd = getActivePane()->getCurrentView() == Pane::Table ? 4 : 1;
     for (int i = 0; i < selectionList.count(); i += toAdd)
     {
         QFileInfo fileInfo(fileSystemModel->filePath(selectionList.at(i)));
         if (fileInfo.isSymLink())
         {
-            qDebug() << "isSymLink";
             DeleteThread *thread = new DeleteThread(fileInfo);
             connect(thread, SIGNAL(DeleteError()), this, SLOT(slotDeleteError()));
             thread->start();
         }
         else
         {
-            qDebug() << "!isSymLink";
             if (!yesToAll)
                 if (confirm)
                 {
@@ -282,13 +294,11 @@ void MainWindow::slotDelete()
             thread->start();
         }
     }
-    return;
 }
 
 void MainWindow::slotDeleteError()
 {
     QMessageBox::information(this, "Delete failed", "Some files could not be deleted.");
-return;
 }
 
 void MainWindow::slotCopy()
@@ -296,6 +306,7 @@ void MainWindow::slotCopy()
     QModelIndexList selectionList;
     QWidget* focus(focusWidget());
     QAbstractItemView* view;
+
     if (focus == dirTreeView || getActivePane()->isFocused(focus, false))
     {
         view = (QAbstractItemView *)focus;
@@ -303,6 +314,7 @@ void MainWindow::slotCopy()
     }
     if (selectionList.count() == 0)
         return;
+
     QApplication::clipboard()->setMimeData(fileSystemModel->mimeData(selectionList));
     pasteAction->setData(false);
 }
@@ -312,6 +324,7 @@ void MainWindow::slotCut()
     QModelIndexList selectionList;
     QWidget* focus(focusWidget());
     QAbstractItemView* view;
+
     if (focus == dirTreeView || getActivePane()->isFocused(focus, false))
     {
         view = (QAbstractItemView *)focus;
@@ -319,6 +332,7 @@ void MainWindow::slotCut()
     }
     if (selectionList.count() == 0)
         return;
+
     QApplication::clipboard()->setMimeData(fileSystemModel->mimeData(selectionList));
     pasteAction->setData(true);
     view->selectionModel()->clear();
@@ -327,8 +341,8 @@ void MainWindow::slotCut()
 void MainWindow::slotPaste()
 {
     QWidget* focus(focusWidget());
-    //qDebug() << QApplication::clipboard()->mimeData()->text();
     Qt::DropAction copyOrCut(pasteAction->data().toBool() ? Qt::MoveAction : Qt::CopyAction);
+
     if (getActivePane()->isFocused(focus, false))
         if (copyOrCut == Qt::CopyAction)
         {
@@ -340,6 +354,7 @@ void MainWindow::slotPaste()
             connect(thread, SIGNAL(setMaxSize(quint64, quint64)), progress, SLOT(slotSetMaxSize(quint64, quint64)));
             connect(thread, SIGNAL(setCurrentSize(quint64)), progress, SLOT(slotSetCurrentSize(quint64)));
             connect(thread, SIGNAL(closeProgressBar()), progress, SLOT(deleteLater()));
+            connect(progress, SIGNAL(abortCopy()), thread, SLOT(slotAbort()));
             thread->start();
             progress->show();
         }
@@ -354,7 +369,6 @@ void MainWindow::slotPaste()
             PasteThread *thread = new PasteThread(copyOrCut, fileSystemProxyModel->mapToSource(dirTreeView->currentIndex()), fileSystemModel);
             thread->start();
         }
-
 }
 
 void MainWindow::slotClipboardChanged()
@@ -385,6 +399,12 @@ void MainWindow::slotShowProperties()
     Properties prop(this);
     QTimer::singleShot(100, &prop, SLOT(slotDirSize()));
     prop.exec();
+}
+
+void MainWindow::slotShowFindWindow()
+{
+    FindWindow *find = new FindWindow(getActivePane()->getPath());
+    find->show();
 }
 
 void MainWindow::slotShowHidden()
@@ -441,6 +461,7 @@ bool FileSystemFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelInd
 {
     QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
     QFileSystemModel *fileSystemModel = (QFileSystemModel *) sourceModel();
+
     if ((fileSystemModel->isDir(index)) && (fileSystemModel->fileName(index).compare("..") != 0))
         return true;
     else

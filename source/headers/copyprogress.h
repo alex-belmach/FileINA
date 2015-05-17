@@ -23,9 +23,15 @@ public slots:
     void slotSetMaxSize(quint64, quint64);
     void slotSetCurrentSize(quint64);
 
+signals:
+    void abortCopy();
+
 private:
     Ui::CopyProgress *ui;
     quint64 ratio;
+
+private slots:
+    void slotAbortCopy();
 };
 
 #endif // COPYPROGRESS_H
