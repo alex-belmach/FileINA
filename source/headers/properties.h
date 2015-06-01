@@ -22,7 +22,7 @@ class Properties : public QDialog
     QTimer *timer;
 
 public:
-    explicit Properties(QWidget *parent = 0);
+    explicit Properties(QString path = "", QWidget *parent = 0);
 
 private slots:
     void slotAccepted();

@@ -9,6 +9,7 @@ FindWindow::FindWindow(QString path, QWidget *parent) :
 {
     ui->setupUi(this);
     setWindowTitle("Find Files");
+    setWindowIcon(QIcon(":/Images/Find.png"));
 
     connect(ui->browseButton, SIGNAL(clicked()), this, SLOT(slotBrowse()));
     connect(ui->findButton, SIGNAL(clicked()), this, SLOT(slotFind()));
@@ -61,6 +62,8 @@ void FindWindow::slotFind()
     QString fileName = ui->fileComboBox->currentText();
     QString text = ui->textComboBox->currentText();
     QString path = ui->dirComboBox->currentText();
+    if(path.isEmpty())
+        return;
     QFileInfoList files;
     currentDir = QDir(path);
     fileName = "*" + fileName + "*";

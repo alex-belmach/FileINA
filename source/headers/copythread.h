@@ -18,12 +18,11 @@ class CopyThread : public QThread
     bool exitFlag;
     quint64 totalSize, currentTotalSize;
     QFileSystemModel *fileSystemModel;
-    QModelIndex focus;
     QString strTo, filePath, fileName, toPath;
     QVector<QString> *copyVector;
 
 public:
-    explicit CopyThread(QString path, QFileSystemModel *model, QModelIndex focus, QObject *parent = 0);
+    explicit CopyThread(QString path, QFileSystemModel *model, QObject *parent = 0);
     virtual void run();
 
 signals:

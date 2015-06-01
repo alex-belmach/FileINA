@@ -6,7 +6,7 @@
 #define SIZE_NUMS 4
 #define UPDATE_TIME 500
 
-Properties::Properties(QWidget *parent) :
+Properties::Properties(QString path, QWidget *parent) :
     QDialog(parent)
 {
     setWindowTitle("Properties");
@@ -20,7 +20,10 @@ Properties::Properties(QWidget *parent) :
     if (mainWindow->viewIsFocused(focus, false))
     {
         view = (QAbstractItemView *)focus;
-        fileInfo = mainWindow->getFileSystemModel()->fileInfo(view->selectionModel()->selectedIndexes().at(0));
+        if (path == "")
+            fileInfo = mainWindow->getFileSystemModel()->fileInfo(view->selectionModel()->selectedIndexes().at(0));
+        else
+            fileInfo = QFileInfo(path);
 
         QLabel *nameLabel = new QLabel(fileInfo.fileName());
         formLayout->addRow("Name:", nameLabel);

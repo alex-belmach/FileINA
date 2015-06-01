@@ -1,10 +1,10 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
     setWindowTitle("FileINA");
+    setWindowIcon(QIcon(":/Images/Application.png"));
 
     createMenusAndActions();
 
@@ -106,7 +106,7 @@ void MainWindow::setCurrentIndex(const QModelIndex &index)
 
 bool MainWindow::viewIsFocused(QWidget *focus, bool withPath)
 {
-    if ((focus == dirTreeView) | (leftPane->isFocused(focus, withPath)) | (rightPane->isFocused(focus, withPath)))
+    if ((leftPane->isFocused(focus, withPath)) | (rightPane->isFocused(focus, withPath)))
         return true;
     else
         return false;
@@ -124,18 +124,18 @@ void MainWindow::createMenusAndActions()
 {
     menuBar = new QMenuBar(0);
 
-    aboutAction = new QAction(QIcon::fromTheme("about", QIcon(":/Images/About.ico")), "About", this);
+    aboutAction = new QAction(QIcon::fromTheme("about", QIcon(":/Images/About.png")), "About", this);
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(slotShowAbout()));
 
-    newFolderAction = new QAction(QIcon::fromTheme("new", QIcon(":/Images/NewFolder.ico")), "New Folder", this);
+    newFolderAction = new QAction(QIcon::fromTheme("new", QIcon(":/Images/NewFolder.png")), "New Folder", this);
     newFolderAction->setShortcut(QKeySequence::New);
     connect(newFolderAction, SIGNAL(triggered()), this, SLOT(slotNewFolder()));
 
-    deleteAction = new QAction(QIcon::fromTheme("delete", QIcon(":/Images/Delete.ico")), "Delete", this);
+    deleteAction = new QAction(QIcon::fromTheme("delete", QIcon(":/Images/Delete.png")), "Delete", this);
     deleteAction->setShortcut(QKeySequence::Delete);
     connect(deleteAction, SIGNAL(triggered()), this, SLOT(slotDelete()));
 
-    settingsAction = new QAction(QIcon::fromTheme("settings", QIcon(":/Images/Preferences.ico")), "Settings", this);
+    settingsAction = new QAction(QIcon::fromTheme("settings", QIcon(":/Images/Preferences.png")), "Settings", this);
     connect(settingsAction, SIGNAL(triggered()), this, SLOT(slotSettings()));
 
     exitAction = new QAction(QIcon::fromTheme("exit", QIcon(":/Images/Exit.png")), "Exit", this);
@@ -154,15 +154,15 @@ void MainWindow::createMenusAndActions()
     cutAction->setShortcut(QKeySequence::Cut);
     connect(cutAction, SIGNAL(triggered()), this, SLOT(slotCut()));
 
-    propertiesAction = new QAction(QIcon::fromTheme("properties", QIcon(":/Images/Properties.ico")), "Properties", this);
+    propertiesAction = new QAction(QIcon::fromTheme("properties", QIcon(":/Images/Properties.png")), "Properties", this);
     propertiesAction->setShortcut(QKeySequence::Preferences);
     connect(propertiesAction, SIGNAL(triggered()), this, SLOT(slotShowProperties()));
 
-    tableViewAction = new QAction(QIcon::fromTheme("tableview", QIcon(":/Images/TableView.ico")), "Table View", this);
+    tableViewAction = new QAction(QIcon::fromTheme("tableview", QIcon(":/Images/TableView.png")), "Table View", this);
     tableViewAction->setCheckable(true);
     connect(tableViewAction, SIGNAL(triggered()), this, SLOT(slotTableView()));
 
-    listViewAction = new QAction(QIcon::fromTheme("listview", QIcon(":/Images/ListView.ico")), "List View", this);
+    listViewAction = new QAction(QIcon::fromTheme("listview", QIcon(":/Images/ListView.png")), "List View", this);
     listViewAction->setCheckable(true);
     connect(listViewAction, SIGNAL(triggered()), this, SLOT(slotListView()));
 
@@ -170,11 +170,11 @@ void MainWindow::createMenusAndActions()
     viewActionGroup->addAction(tableViewAction);
     viewActionGroup->addAction(listViewAction);
 
-    showHiddenAction = new QAction("show hidden", this);
+    showHiddenAction = new QAction("Show Hidden", this);
     showHiddenAction->setCheckable(true);
     connect(showHiddenAction, SIGNAL(triggered()), this, SLOT(slotShowHidden()));
 
-    findAction = new QAction("find", this);
+    findAction = new QAction(QIcon::fromTheme("find", QIcon(":/Images/Find.png")), "Find", this);
     findAction->setShortcuts(QKeySequence::Find);
     connect(findAction, SIGNAL(triggered()), this, SLOT(slotShowFindWindow()));
 
@@ -224,7 +224,7 @@ void MainWindow::createMenusAndActions()
 void MainWindow::slotShowAbout()
 {
     QMessageBox::about(this, "About FileINA", "<h2>FileINA</h2>"
-                       "<p><em>Version 0.9</em>"
+                       "<p><em>Version 1.0</em>"
                        "<p>File Manager<br>"
                        "2015 by Alexey Belmach<br>");
 }
@@ -267,11 +267,15 @@ void MainWindow::slotDelete()
         view = (QAbstractItemView *)focus;
         selectionList = view->selectionModel()->selectedIndexes();
     }
+    else
+        return;
 
     quint64 toAdd = getActivePane()->getCurrentView() == Pane::Table ? 4 : 1;
     for (int i = 0; i < selectionList.count(); i += toAdd)
     {
         QFileInfo fileInfo(fileSystemModel->filePath(selectionList.at(i)));
+        if (fileInfo.fileName() == ".." || fileInfo.fileName() == ".")
+            continue;
         if (fileInfo.isSymLink())
         {
             DeleteThread *thread = new DeleteThread(fileInfo);
@@ -307,7 +311,7 @@ void MainWindow::slotCopy()
     QWidget* focus(focusWidget());
     QAbstractItemView* view;
 
-    if (focus == dirTreeView || getActivePane()->isFocused(focus, false))
+    if (getActivePane()->isFocused(focus, false))
     {
         view = (QAbstractItemView *)focus;
         selectionList = view->selectionModel()->selectedIndexes();
@@ -316,6 +320,7 @@ void MainWindow::slotCopy()
         return;
 
     QApplication::clipboard()->setMimeData(fileSystemModel->mimeData(selectionList));
+
     pasteAction->setData(false);
 }
 
@@ -325,7 +330,7 @@ void MainWindow::slotCut()
     QWidget* focus(focusWidget());
     QAbstractItemView* view;
 
-    if (focus == dirTreeView || getActivePane()->isFocused(focus, false))
+    if (getActivePane()->isFocused(focus, false))
     {
         view = (QAbstractItemView *)focus;
         selectionList = view->selectionModel()->selectedIndexes();
@@ -347,7 +352,7 @@ void MainWindow::slotPaste()
         if (copyOrCut == Qt::CopyAction)
         {
             CopyProgress *progress = new CopyProgress();
-            CopyThread *thread = new CopyThread(getActivePane()->getPath(), fileSystemModel, qobject_cast<QAbstractItemView *>(focus)->rootIndex());
+            CopyThread *thread = new CopyThread(getActivePane()->getPath(), fileSystemModel);
             connect(thread, SIGNAL(setMaxTotal(quint64)), progress, SLOT(slotSetMaxTotal(quint64)));
             connect(thread, SIGNAL(setCurrentTotal(quint64)), progress, SLOT(slotSetCurrentTotal(quint64)));
             connect(thread, SIGNAL(setFromTo(QString,QString)), progress, SLOT(slotSetFromTo(QString, QString)));
@@ -396,9 +401,20 @@ void MainWindow::slotListView()
 
 void MainWindow::slotShowProperties()
 {
-    Properties prop(this);
-    QTimer::singleShot(100, &prop, SLOT(slotDirSize()));
-    prop.exec();
+    if (getActivePane()->getPath().isEmpty())
+        return;
+    if (((QAbstractItemView *)focusWidget())->selectionModel()->selectedIndexes().count() > 0)
+    {
+        Properties prop("", this);
+        QTimer::singleShot(100, &prop, SLOT(slotDirSize()));
+        prop.exec();
+    }
+    else
+    {
+        Properties prop(getActivePane()->getPath(), this);
+        QTimer::singleShot(100, &prop, SLOT(slotDirSize()));
+        prop.exec();
+    }
 }
 
 void MainWindow::slotShowFindWindow()

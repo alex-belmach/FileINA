@@ -35,8 +35,8 @@ public:
 
     void showContextMenu(QPoint);
     void setCurrentIndex(const QModelIndex &);
-    bool viewIsFocused(QWidget* , bool);
     void toolBarSetVisible(bool);
+    bool viewIsFocused(QWidget* , bool);
     bool toolBarVisibility();
     QFileSystemModel* getFileSystemModel();
 
@@ -75,11 +75,11 @@ private:
 
     void createMenusAndActions();
     void setActivePane(Pane *);
-    Pane* getActivePane();
     void updateViewActions();
     void saveSettings();
     void restoreSettings();
     void closeEvent(QCloseEvent *);
+    Pane* getActivePane();
 
 private slots:
     void slotFocusChanged(QWidget*, QWidget*);

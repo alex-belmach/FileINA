@@ -1,15 +1,17 @@
 <RCC>
     <qresource prefix="/">
         <file>Images/Exit.png</file>
-        <file>Images/About.ico</file>
         <file>Images/Copy.png</file>
         <file>Images/Cut.png</file>
-        <file>Images/Delete.ico</file>
-        <file>Images/NewFolder.ico</file>
         <file>Images/Paste.png</file>
-        <file>Images/Preferences.ico</file>
-        <file>Images/Properties.ico</file>
-        <file>Images/ListView.ico</file>
-        <file>Images/TableView.ico</file>
+        <file>Images/Find.png</file>
+        <file>Images/TableView.png</file>
+        <file>Images/ListView.png</file>
+        <file>Images/Application.png</file>
+        <file>Images/About.png</file>
+        <file>Images/Delete.png</file>
+        <file>Images/NewFolder.png</file>
+        <file>Images/Preferences.png</file>
+        <file>Images/Properties.png</file>
     </qresource>
 </RCC>
